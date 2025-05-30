@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Space Blaster - Inicio</title>
+  <style>
+    body {
+      margin: 0;
+      padding: 0;   
+      background-color: black;
+      background-image: url({{ url_for('static', filename='galaxy.jpg') }});
+        background-size: cover;
+        background-repeat: no-repeat;
+        background-position: center;
+      height: 100vh;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      font-family: 'Courier New', monospace;
+      color: white;
+    }
+
+    .container {
+      background-color: rgba(0, 0, 0, 0.7); /* Fondo negro con transparencia */
+      padding: 20px;
+      border: 2px solid #00c9ff;
+      border-radius: 10px;
+      text-align: center;
+      width: 400px;
+      max-height: 500px;
+      overflow-y: auto;
+    }
+
+    h1 {
+      font-size: 48px;
+      color: #00c9ff;
+      margin-bottom: 10px;
+      text-shadow: 0 0 10px #00c9ff;
+    }
+
+    p {
+      font-size: 18px;
+      line-height: 1.5;
+    }
+
+    a {
+      display: inline-block;
+      margin-top: 20px;
+      padding: 10px 20px;
+      background-color: #00c9ff;
+      color: black;
+      text-decoration: none;
+      border-radius: 8px;
+      font-size: 16px;
+    }
+
+    a:hover {
+      background-color: #00aaff;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>Space Blaster</h1>
+    <p>Embárcate en un viaje místico a través de la galaxia, donde el destino de la humanidad depende de tu destreza. Con tu cohete estelar, enfrenta a invasores alienígenas en una danza cósmica de luz y sombra. El universo susurra secretos antiguos mientras luchas por la supervivencia.</p>
+    <p><strong>Reglas:</strong></p>
+    <ul>
+      <li>Alcanza 50 puntos para ganar y desbloquear el poder estelar.</li>
+      <li>Mueve tu cohete con las flechas izquierda y derecha.</li>
+      <li>Dispara a los aliens con la barra espaciadora.</li>
+      <li>Pierde 1 punto por cada alien que escape; si llegas a 0, el juego termina.</li>
+    </ul>
+    <a href="/game">Iniciar Juego</a>
+  </div>
+</body>
+</html>

@@ -1,0 +1,247 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Space Blaster</title>
+  <style>
+    html, body {
+      margin: 0;
+      padding: 0;
+      background-image: url({{ url_for('static', filename='galaxy2.jpg') }});
+      background-size: cover;
+      background-position: center;
+      background-repeat: no-repeat; /* Evita que la imagen se repita */
+      height: 100vh;
+      overflow: hidden;
+      font-family: 'Courier New', monospace;
+      color: white;
+    }
+
+    canvas {
+      display: block;
+      margin: 150px auto 0 auto;
+      background-color: rgba(0, 0, 0, 0.5);
+      border: 2px solid white;
+      border-radius: 10px;
+    }
+
+    #score, #controls {
+      position: absolute;
+      left: 50%;
+      transform: translateX(-50%);
+      z-index: 1;
+      text-align: center;
+    }
+
+    #score {
+      top: 20px;
+      font-size: 24px;
+      background-color: rgba(0, 0, 0, 0.8);
+      padding: 5px 15px;
+      border-radius: 8px;
+    }
+
+    #controls {
+      top: 60px;
+    }
+
+    button {
+      margin: 5px;
+      padding: 10px 20px;
+      font-size: 16px;
+      border: none;
+      border-radius: 8px;
+      background-color: #00c9ff;
+      color: black;
+      cursor: pointer;
+    }
+
+    #gameOverScreen {
+      display: none;
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100vw;
+      height: 100vh;
+      background-color: rgba(0, 0, 0, 0.9);
+      color: white;
+      font-size: 32px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      z-index: 2;
+    }
+
+    #gameOverScreen button {
+      margin-top: 20px;
+    }
+  </style>
+</head>
+<body>
+  <div id="score">Puntos: 0</div>
+  <div id="controls">
+    <button onclick="endGame()">Salir del juego</button>
+  </div>
+  <div id="gameOverScreen">
+    <div id="finalMessage"></div>
+    <button onclick="restartGame()">Reiniciar juego</button>
+  </div>
+  <canvas id="gameCanvas" width="800" height="600"></canvas>
+
+  <script>
+    const canvas = document.getElementById('gameCanvas');
+    const ctx = canvas.getContext('2d');
+
+    let player, bullets, enemies, score, gameRunning;
+
+    const scoreDisplay = document.getElementById("score");
+    const gameOverScreen = document.getElementById("gameOverScreen");
+    const finalMessage = document.getElementById("finalMessage");
+
+    function initGame() {
+      player = {
+        x: canvas.width / 2 - 25,
+        y: canvas.height - 60,
+        width: 50,
+        height: 40,
+        speed: 15,
+      };
+      bullets = [];
+      enemies = [];
+      score = 0;
+      gameRunning = true;
+      scoreDisplay.textContent = `Puntos: ${score}`;
+      gameOverScreen.style.display = 'none';
+    }
+
+    function drawPlayer() {
+      ctx.fillStyle = 'silver';
+      ctx.beginPath();
+      ctx.moveTo(player.x + player.width / 2, player.y);
+      ctx.lineTo(player.x, player.y + player.height);
+      ctx.lineTo(player.x + player.width, player.y + player.height);
+      ctx.closePath();
+      ctx.fill();
+
+      ctx.fillStyle = 'cyan';
+      ctx.fillRect(player.x + player.width / 2 - 5, player.y + 10, 10, 10);
+
+      ctx.strokeStyle = 'orange';
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      ctx.moveTo(player.x, player.y + player.height);
+      ctx.lineTo(player.x - 10, player.y + player.height + 10);
+      ctx.stroke();
+      ctx.beginPath();
+      ctx.moveTo(player.x + player.width, player.y + player.height);
+      ctx.lineTo(player.x + player.width + 10, player.y + player.height + 10);
+      ctx.stroke();
+    }
+
+    function drawBullets() {
+      ctx.fillStyle = 'yellow';
+      bullets.forEach((b, i) => {
+        b.y -= 7;
+        if (b.y < 0) bullets.splice(i, 1);
+        ctx.fillRect(b.x, b.y, 10, 10);
+      });
+    }
+
+    function drawEnemies() {
+      enemies.forEach((e, ei) => {
+        e.y += 1;
+        if (e.y > canvas.height) {
+          enemies.splice(ei, 1);
+          if (score > 0) {
+            score--;
+            scoreDisplay.textContent = `Puntos: ${score}`;
+          }
+          if (score <= 0) {
+            endGame("¡Juego terminado! Se te acabaron los puntos.");
+          }
+        }
+
+        bullets.forEach((b, bi) => {
+          const hitboxPadding = 10;
+          if (
+            b.x < e.x + e.size + hitboxPadding &&
+            b.x + 10 > e.x - hitboxPadding &&
+            b.y < e.y + e.size + hitboxPadding &&
+            b.y + 10 > e.y - hitboxPadding
+          ) {
+            enemies.splice(ei, 1);
+            bullets.splice(bi, 1);
+            score++;
+            scoreDisplay.textContent = `Puntos: ${score}`;
+            if (score >= 50) {
+              endGame("¡Has alcanzado los 50 puntos! 🎉");
+            }
+          }
+        });
+
+        ctx.fillStyle = 'green';
+        ctx.beginPath();
+        ctx.ellipse(e.x, e.y, e.size, e.size / 1.5, 0, 0, Math.PI * 2);
+        ctx.fill();
+
+        ctx.fillStyle = 'white';
+        ctx.beginPath();
+        ctx.arc(e.x - 5, e.y - 2, 3, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.beginPath();
+        ctx.arc(e.x + 5, e.y - 2, 3, 0, Math.PI * 2);
+        ctx.fill();
+
+        ctx.fillStyle = 'black';
+        ctx.beginPath();
+        ctx.arc(e.x - 5, e.y - 2, 1, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.beginPath();
+        ctx.arc(e.x + 5, e.y - 2, 1, 0, Math.PI * 2);
+        ctx.fill();
+      });
+    }
+
+    function spawnEnemy() {
+      if (!gameRunning) return;
+      let x = Math.random() * (canvas.width - 20) + 10;
+      enemies.push({ x, y: 0, size: 15 });
+    }
+
+    function gameLoop() {
+      if (!gameRunning) return;
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      drawPlayer();
+      drawBullets();
+      drawEnemies();
+      requestAnimationFrame(gameLoop);
+    }
+
+    function endGame(message = "Juego terminado.") {
+      gameRunning = false;
+      finalMessage.textContent = message;
+      gameOverScreen.style.display = 'flex';
+    }
+
+    function restartGame() {
+      initGame();
+      gameLoop();
+    }
+
+    setInterval(spawnEnemy, 1000);
+    initGame();
+    gameLoop();
+
+    document.addEventListener('keydown', (e) => {
+      if (!gameRunning) return;
+      if (e.key === 'ArrowLeft' && player.x > 0) player.x -= player.speed;
+      if (e.key === 'ArrowRight' && player.x + player.width < canvas.width) player.x += player.speed;
+      if (e.key === ' ') {
+        bullets.push({ x: player.x + player.width / 2 - 5, y: player.y });
+      }
+    });
+  </script>
+</body>
+</html>
